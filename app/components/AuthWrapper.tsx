@@ -1,7 +1,7 @@
 "use client";
 
 import { SignInButton, SignUpButton, useAuth } from "@clerk/nextjs";
-import { useEffect } from "react";
+import Image from "next/image";
 
 interface AuthWrapperProps {
   children: React.ReactNode;
@@ -13,9 +13,9 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
   // Don't render anything until auth state is loaded
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-black">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Loading...</h1>
+          <h1 className="text-3xl font-bold text-white mb-2">Loading...</h1>
         </div>
       </div>
     );
@@ -28,13 +28,22 @@ export default function AuthWrapper({ children }: AuthWrapperProps) {
 
   // If user is not signed in, show the sign-in/sign-up options
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8">
+    <div className="min-h-screen flex items-center justify-center bg-black">
+      <div className=" w-full space-y-8 p-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Bear Lake Reunion
+          <h1 className="text-3xl font-bold text-white mb-2">
+            Welcome to the Bear Lake Reunion
           </h1>
-          <p className="text-gray-600 mb-8">
+          <div className="flex justify-center my-8">
+            <Image
+              src="/bear-lake-1.jpg"
+              alt="Bear Lake Reunion Logo"
+              width={800}
+              height={800}
+              className="rounded-lg"
+            />
+          </div>
+          <p className="text-gray-300 mb-8">
             Please sign in to access the reunion information and updates.
           </p>
           <div className="flex gap-4 justify-center">
