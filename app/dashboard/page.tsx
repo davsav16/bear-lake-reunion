@@ -1,13 +1,40 @@
-import { getUserData } from "@/lib/userUtils";
-import { redirect } from "next/navigation";
+"use client";
 
-export default async function DashboardPage() {
-  // Get user data to check RSVP status
-  const user = await getUserData();
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-  // If user hasn't completed RSVP, redirect to RSVP page
-  if (!user?.rsvpCompleted) {
-    redirect("/rsvp");
+export default function DashboardPage() {
+  const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const checkUserStatus = async () => {
+      try {
+        const response = await fetch("/api/users");
+        if (response.ok) {
+          const data = await response.json();
+          if (!data.user?.rsvpCompleted) {
+            router.push("/rsvp");
+          }
+        }
+      } catch (error) {
+        console.error("Error checking user status:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkUserStatus();
+  }, [router]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Loading...</h1>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -31,11 +58,11 @@ export default async function DashboardPage() {
           <div className="space-y-3">
             <div>
               <span className="font-medium text-gray-700">Date:</span>
-              <p className="text-gray-900">July 15-17, 2024</p>
+              <p className="text-gray-900">August 29-31, 2025</p>
             </div>
             <div>
               <span className="font-medium text-gray-700">Location:</span>
-              <p className="text-gray-900">Bear Lake Resort</p>
+              <p className="text-gray-900">Bear Lake</p>
             </div>
             <div>
               <span className="font-medium text-gray-700">Status:</span>
@@ -50,17 +77,10 @@ export default async function DashboardPage() {
         <div className="bg-white p-6 rounded-lg shadow-lg border">
           <h2 className="text-xl font-semibold mb-4 text-gray-900">Schedule</h2>
           <div className="space-y-3">
-            <div>
-              <span className="font-medium text-gray-700">Friday:</span>
-              <p className="text-gray-900">Welcome Dinner - 6:00 PM</p>
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">Saturday:</span>
-              <p className="text-gray-900">Lake Activities - All Day</p>
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">Sunday:</span>
-              <p className="text-gray-900">Farewell Brunch - 10:00 AM</p>
+            <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <p className="text-yellow-800 text-sm">
+                <strong>Note:</strong> Schedule details will be coming soon!
+              </p>
             </div>
           </div>
         </div>
@@ -71,16 +91,9 @@ export default async function DashboardPage() {
             Latest Updates
           </h2>
           <div className="space-y-3">
-            <div className="border-l-4 border-blue-500 pl-3">
-              <p className="text-sm text-gray-500">June 1, 2024</p>
-              <p className="text-gray-900">
-                Weather forecast looks perfect for the reunion weekend!
-              </p>
-            </div>
-            <div className="border-l-4 border-green-500 pl-3">
-              <p className="text-sm text-gray-500">May 15, 2024</p>
-              <p className="text-gray-900">
-                RSVP deadline extended to June 30th
+            <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800 text-sm">
+                <strong>Note:</strong> Updates will be coming soon!
               </p>
             </div>
           </div>
@@ -93,14 +106,11 @@ export default async function DashboardPage() {
           Quick Actions
         </h2>
         <div className="flex flex-wrap gap-4">
-          <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+          <button
+            onClick={() => router.push("/rsvp-edit")}
+            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+          >
             Update RSVP
-          </button>
-          <button className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
-            View Full Schedule
-          </button>
-          <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors">
-            Contact Organizers
           </button>
         </div>
       </div>

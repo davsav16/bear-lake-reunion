@@ -28,8 +28,6 @@ export async function POST(request: NextRequest) {
 
     // If that didn't work, try the alternative approach
     if (!updatedFamily) {
-      console.log("Positional operator failed, trying alternative approach");
-
       // Find the document first
       const doc = await FamilyMember.findOne({});
       if (doc) {

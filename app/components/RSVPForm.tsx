@@ -102,9 +102,6 @@ export default function RSVPForm() {
     setError("");
 
     try {
-      console.log("Submitting RSVP - selectedFamily:", selectedFamily);
-      console.log("Submitting RSVP - familyMembers:", familyMembers);
-
       // Update family members in MongoDB
       const response = await fetch("/api/families/rsvp", {
         method: "POST",

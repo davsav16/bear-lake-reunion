@@ -1,16 +1,6 @@
 import RSVPForm from "../components/RSVPForm";
-import { getUserData } from "@/lib/userUtils";
-import { redirect } from "next/navigation";
 
 export default async function RSVPPage() {
-  // Get user data to check RSVP status
-  const user = await getUserData();
-
-  // If user has already completed RSVP, redirect to dashboard
-  if (user?.rsvpCompleted) {
-    redirect("/dashboard");
-  }
-
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] p-8">
       <div className="text-center max-w-2xl">
