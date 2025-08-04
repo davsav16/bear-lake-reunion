@@ -21,7 +21,6 @@ export async function ensureUserExists() {
         role: "",
       });
       await user.save();
-      console.log(`User created in MongoDB via ensureUserExists: ${userId}`);
     }
 
     return user;

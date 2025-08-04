@@ -25,6 +25,10 @@ export default function RSVPForm() {
     null
   );
   const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+  const [originalFamilyMembers, setOriginalFamilyMembers] = useState<
+    FamilyMember[]
+  >([]);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   // Fetch families from MongoDB
   useEffect(() => {
@@ -46,7 +50,10 @@ export default function RSVPForm() {
   const handleFamilyChange = (familyId: number) => {
     const family = families.find((f) => f.id === familyId);
     setSelectedFamily(family || null);
-    setFamilyMembers(family ? [...family.members] : []);
+    const members = family ? [...family.members] : [];
+    setFamilyMembers(members);
+    setOriginalFamilyMembers(members);
+    setIsDropdownOpen(false);
   };
 
   const updateMemberRSVP = (
@@ -69,6 +76,19 @@ export default function RSVPForm() {
         member.id === memberId ? { ...member, plusOne } : member
       )
     );
+  };
+
+  const hasChanges = () => {
+    if (familyMembers.length === 0 || originalFamilyMembers.length === 0) {
+      return false;
+    }
+
+    return familyMembers.some((member, index) => {
+      const original = originalFamilyMembers[index];
+      return (
+        member.rsvp !== original.rsvp || member.plusOne !== original.plusOne
+      );
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -137,7 +157,7 @@ export default function RSVPForm() {
         <h2 className="text-2xl font-bold text-gray-900 mb-2">
           Welcome to our 2025 Family Reunion!
         </h2>
-        <p className="text-lg text-gray-600">
+        <p className="text-lg text-gray-700">
           Please fill out your details below!
         </p>
       </div>
@@ -149,27 +169,59 @@ export default function RSVPForm() {
           </div>
         )}
 
-        <div>
+        <div className="relative">
           <label
             htmlFor="family"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-medium text-gray-900 mb-2"
           >
             Select your family
           </label>
-          <select
-            id="family"
-            name="family"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            required
-            onChange={(e) => handleFamilyChange(Number(e.target.value))}
-          >
-            <option value="">Select your family</option>
-            {families.map((family) => (
-              <option key={family.id} value={family.id}>
-                {family.name}
-              </option>
-            ))}
-          </select>
+
+          {/* Custom Dropdown */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="w-full px-3 py-3 text-left bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
+            >
+              <span
+                className={selectedFamily ? "text-gray-900" : "text-gray-500"}
+              >
+                {selectedFamily ? selectedFamily.name : "Select your family"}
+              </span>
+              <svg
+                className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 transition-transform ${
+                  isDropdownOpen ? "rotate-180" : ""
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+
+            {/* Dropdown Options */}
+            {isDropdownOpen && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                {families.map((family) => (
+                  <button
+                    key={family.id}
+                    type="button"
+                    onClick={() => handleFamilyChange(family.id)}
+                    className="w-full px-3 py-3 text-left text-gray-900 hover:bg-gray-100 focus:bg-gray-100 focus:outline-none border-b border-gray-100 last:border-b-0"
+                  >
+                    {family.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {selectedFamily && (
@@ -181,13 +233,13 @@ export default function RSVPForm() {
             {familyMembers.map((member) => (
               <div
                 key={member.id}
-                className="border border-gray-200 rounded-lg p-4"
+                className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm"
               >
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-medium text-gray-900">
+                <div className="md:flex md:items-center md:justify-between mb-3">
+                  <span className="font-medium text-gray-900 text-center md:text-left block mb-3 md:mb-0">
                     {member.name}
                   </span>
-                  <div className="flex space-x-2">
+                  <div className="flex justify-center md:justify-end space-x-2">
                     {["undecided", "not attending", "attending"].map(
                       (status) => (
                         <button
@@ -202,10 +254,10 @@ export default function RSVPForm() {
                                 | "attending"
                             )
                           }
-                          className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                          className={`px-3 py-1 text-sm rounded-md transition-colors font-medium ${
                             member.rsvp === status
                               ? "bg-blue-600 text-white"
-                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                              : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                           }`}
                         >
                           {status === "not attending"
@@ -220,39 +272,62 @@ export default function RSVPForm() {
                 </div>
 
                 {member.plusOne !== undefined && (
-                  <div className="ml-4 border-l-2 border-gray-200 pl-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Plus One</span>
-                      <div className="flex space-x-2">
-                        {["undecided", "not attending", "attending"].map(
-                          (status) => (
-                            <button
-                              key={status}
-                              type="button"
-                              onClick={() =>
-                                updatePlusOneRSVP(
-                                  member.id,
-                                  status as
-                                    | "undecided"
-                                    | "not attending"
-                                    | "attending"
-                                )
-                              }
-                              className={`px-2 py-1 text-xs rounded-md transition-colors ${
-                                member.plusOne === status
-                                  ? "bg-green-600 text-white"
-                                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                              }`}
-                            >
-                              {status === "not attending"
-                                ? "Not Going"
-                                : status === "attending"
-                                ? "Going"
-                                : "Undecided"}
-                            </button>
-                          )
-                        )}
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <div className="md:flex md:items-center md:justify-between">
+                      <div className="flex items-center justify-center md:justify-start mb-3 md:mb-0">
+                        <input
+                          type="checkbox"
+                          id={`plus-one-${member.id}`}
+                          checked={member.plusOne !== "undecided"}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              updatePlusOneRSVP(member.id, "attending");
+                            } else {
+                              updatePlusOneRSVP(member.id, "undecided");
+                            }
+                          }}
+                          className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <label
+                          htmlFor={`plus-one-${member.id}`}
+                          className="text-sm font-medium text-gray-700 cursor-pointer"
+                        >
+                          Plus one?
+                        </label>
                       </div>
+
+                      {member.plusOne !== "undecided" && (
+                        <div className="flex justify-center md:justify-end space-x-2">
+                          {["undecided", "not attending", "attending"].map(
+                            (status) => (
+                              <button
+                                key={status}
+                                type="button"
+                                onClick={() =>
+                                  updatePlusOneRSVP(
+                                    member.id,
+                                    status as
+                                      | "undecided"
+                                      | "not attending"
+                                      | "attending"
+                                  )
+                                }
+                                className={`px-2 py-1 text-xs rounded-md transition-colors font-medium ${
+                                  member.plusOne === status
+                                    ? "bg-green-600 text-white"
+                                    : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                                }`}
+                              >
+                                {status === "not attending"
+                                  ? "Not Going"
+                                  : status === "attending"
+                                  ? "Going"
+                                  : "Undecided"}
+                              </button>
+                            )
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -263,7 +338,7 @@ export default function RSVPForm() {
 
         <button
           type="submit"
-          disabled={isSubmitting || !selectedFamily}
+          disabled={isSubmitting || !selectedFamily || !hasChanges()}
           className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg"
         >
           {isSubmitting ? "Saving..." : "Save RSVP"}

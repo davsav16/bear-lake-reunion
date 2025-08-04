@@ -13,10 +13,10 @@ export default async function DashboardPage() {
   return (
     <div className="max-w-7xl mx-auto p-8">
       <div className="mb-8">
-        <h1 className="text-4xl font-bold mb-4 text-gray-900">
+        <h1 className="text-4xl font-bold mb-4 text-white">
           Welcome to Your Dashboard
         </h1>
-        <p className="text-lg text-gray-600">
+        <p className="text-lg text-gray-200 font-medium">
           Here you&apos;ll find all the latest updates and information about the
           reunion.
         </p>

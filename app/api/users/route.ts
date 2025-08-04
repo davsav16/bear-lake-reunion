@@ -22,7 +22,6 @@ export async function GET() {
         role: "",
       });
       await user.save();
-      console.log(`User created in MongoDB via API: ${userId}`);
     }
 
     return NextResponse.json({ user });

@@ -14,10 +14,10 @@ export default async function RSVPPage() {
   return (
     <div className="flex flex-col items-center justify-center min-h-[calc(100vh-80px)] p-8">
       <div className="text-center max-w-2xl">
-        <h1 className="text-4xl font-bold mb-4 text-gray-900">
+        <h1 className="text-4xl font-bold mb-4 text-white">
           RSVP for Bear Lake Reunion
         </h1>
-        <p className="text-lg text-gray-600 mb-8">
+        <p className="text-lg text-gray-200 font-medium mb-8">
           Please complete your RSVP to access the reunion dashboard and updates.
         </p>
 

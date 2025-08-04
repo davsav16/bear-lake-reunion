@@ -69,7 +69,6 @@ export async function POST(request: NextRequest) {
         });
 
         await newUser.save();
-        console.log(`User created in MongoDB: ${id}`);
       }
     }
 
