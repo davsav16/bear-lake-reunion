@@ -1,33 +1,100 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+
+interface FamilyMember {
+  id: number;
+  name: string;
+  rsvp: "undecided" | "not attending" | "attending";
+  plusOne?: "undecided" | "not attending" | "attending";
+}
+
+interface FamilyGroup {
+  id: number;
+  name: string;
+  members: FamilyMember[];
+}
 
 export default function RSVPForm() {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [families, setFamilies] = useState<FamilyGroup[]>([]);
+  const [selectedFamily, setSelectedFamily] = useState<FamilyGroup | null>(
+    null
+  );
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([]);
+
+  // Fetch families from MongoDB
+  useEffect(() => {
+    const fetchFamilies = async () => {
+      try {
+        const response = await fetch("/api/families");
+        if (response.ok) {
+          const data = await response.json();
+          setFamilies(data.families);
+        }
+      } catch (err) {
+        console.error("Error fetching families:", err);
+      }
+    };
+
+    fetchFamilies();
+  }, []);
+
+  const handleFamilyChange = (familyId: number) => {
+    const family = families.find((f) => f.id === familyId);
+    setSelectedFamily(family || null);
+    setFamilyMembers(family ? [...family.members] : []);
+  };
+
+  const updateMemberRSVP = (
+    memberId: number,
+    rsvp: "undecided" | "not attending" | "attending"
+  ) => {
+    setFamilyMembers((prev) =>
+      prev.map((member) =>
+        member.id === memberId ? { ...member, rsvp } : member
+      )
+    );
+  };
+
+  const updatePlusOneRSVP = (
+    memberId: number,
+    plusOne: "undecided" | "not attending" | "attending"
+  ) => {
+    setFamilyMembers((prev) =>
+      prev.map((member) =>
+        member.id === memberId ? { ...member, plusOne } : member
+      )
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!selectedFamily) {
+      setError("Please select a family");
+      return;
+    }
+
     setIsSubmitting(true);
     setError("");
 
-    const formData = new FormData(e.currentTarget);
-    const rsvpData = {
-      attending: formData.get("attending") as string,
-      guests: parseInt(formData.get("guests") as string),
-      dietary: formData.get("dietary") as string,
-      notes: formData.get("notes") as string,
-    };
-
     try {
-      const response = await fetch("/api/rsvp", {
+      console.log("Submitting RSVP - selectedFamily:", selectedFamily);
+      console.log("Submitting RSVP - familyMembers:", familyMembers);
+
+      // Update family members in MongoDB
+      const response = await fetch("/api/families/rsvp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(rsvpData),
+        body: JSON.stringify({
+          familyId: selectedFamily.id,
+          members: familyMembers,
+        }),
       });
 
       if (!response.ok) {
@@ -37,8 +104,22 @@ export default function RSVPForm() {
       const result = await response.json();
 
       if (result.success) {
-        // Redirect to dashboard after successful RSVP
-        router.push("/dashboard");
+        // Update user's RSVP status
+        const userResponse = await fetch("/api/users", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            rsvpCompleted: true,
+          }),
+        });
+
+        if (userResponse.ok) {
+          router.push("/dashboard");
+        } else {
+          setError("Failed to update user status");
+        }
       } else {
         setError(result.error || "Failed to submit RSVP");
       }
@@ -51,91 +132,143 @@ export default function RSVPForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-          {error}
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Welcome to our 2025 Family Reunion!
+        </h2>
+        <p className="text-lg text-gray-600">
+          Please fill out your details below!
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+            {error}
+          </div>
+        )}
+
+        <div>
+          <label
+            htmlFor="family"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Select your family
+          </label>
+          <select
+            id="family"
+            name="family"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            required
+            onChange={(e) => handleFamilyChange(Number(e.target.value))}
+          >
+            <option value="">Select your family</option>
+            {families.map((family) => (
+              <option key={family.id} value={family.id}>
+                {family.name}
+              </option>
+            ))}
+          </select>
         </div>
-      )}
 
-      <div>
-        <label
-          htmlFor="attending"
-          className="block text-sm font-medium text-gray-700 mb-2"
-        >
-          Will you be attending?
-        </label>
-        <select
-          id="attending"
-          name="attending"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          required
-        >
-          <option value="">Select an option</option>
-          <option value="yes">Yes, I will attend</option>
-          <option value="no">No, I cannot attend</option>
-          <option value="maybe">Maybe, I&apos;ll let you know</option>
-        </select>
-      </div>
+        {selectedFamily && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              RSVP for {selectedFamily.name}
+            </h3>
 
-      <div>
-        <label
-          htmlFor="guests"
-          className="block text-sm font-medium text-gray-700 mb-2"
-        >
-          Number of guests (including yourself)
-        </label>
-        <input
-          type="number"
-          id="guests"
-          name="guests"
-          min="1"
-          max="10"
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="1"
-          required
-        />
-      </div>
+            {familyMembers.map((member) => (
+              <div
+                key={member.id}
+                className="border border-gray-200 rounded-lg p-4"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-medium text-gray-900">
+                    {member.name}
+                  </span>
+                  <div className="flex space-x-2">
+                    {["undecided", "not attending", "attending"].map(
+                      (status) => (
+                        <button
+                          key={status}
+                          type="button"
+                          onClick={() =>
+                            updateMemberRSVP(
+                              member.id,
+                              status as
+                                | "undecided"
+                                | "not attending"
+                                | "attending"
+                            )
+                          }
+                          className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                            member.rsvp === status
+                              ? "bg-blue-600 text-white"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          }`}
+                        >
+                          {status === "not attending"
+                            ? "Not Going"
+                            : status === "attending"
+                            ? "Going"
+                            : "Undecided"}
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
 
-      <div>
-        <label
-          htmlFor="dietary"
-          className="block text-sm font-medium text-gray-700 mb-2"
-        >
-          Dietary restrictions or preferences
-        </label>
-        <textarea
-          id="dietary"
-          name="dietary"
-          rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Any dietary restrictions or preferences..."
-        />
-      </div>
+                {member.plusOne !== undefined && (
+                  <div className="ml-4 border-l-2 border-gray-200 pl-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Plus One</span>
+                      <div className="flex space-x-2">
+                        {["undecided", "not attending", "attending"].map(
+                          (status) => (
+                            <button
+                              key={status}
+                              type="button"
+                              onClick={() =>
+                                updatePlusOneRSVP(
+                                  member.id,
+                                  status as
+                                    | "undecided"
+                                    | "not attending"
+                                    | "attending"
+                                )
+                              }
+                              className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                                member.plusOne === status
+                                  ? "bg-green-600 text-white"
+                                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                              }`}
+                            >
+                              {status === "not attending"
+                                ? "Not Going"
+                                : status === "attending"
+                                ? "Going"
+                                : "Undecided"}
+                            </button>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
 
-      <div>
-        <label
-          htmlFor="notes"
-          className="block text-sm font-medium text-gray-700 mb-2"
+        <button
+          type="submit"
+          disabled={isSubmitting || !selectedFamily}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg"
         >
-          Additional notes
-        </label>
-        <textarea
-          id="notes"
-          name="notes"
-          rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          placeholder="Any additional information..."
-        />
-      </div>
-
-      <button
-        type="submit"
-        disabled={isSubmitting}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg"
-      >
-        {isSubmitting ? "Submitting..." : "Submit RSVP"}
-      </button>
-    </form>
+          {isSubmitting ? "Saving..." : "Save RSVP"}
+        </button>
+      </form>
+    </div>
   );
 }

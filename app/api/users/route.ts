@@ -53,7 +53,6 @@ export async function PATCH(request: NextRequest) {
         $set: body,
         $setOnInsert: {
           id: userId,
-          rsvpCompleted: false,
           role: "",
         },
       },
