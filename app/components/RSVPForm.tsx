@@ -343,6 +343,46 @@ export default function RSVPForm() {
         >
           {isSubmitting ? "Saving..." : "Save RSVP"}
         </button>
+
+        <div className="text-center">
+          <span className="text-gray-500 text-sm">or</span>
+        </div>
+
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              setIsSubmitting(true);
+              setError("");
+
+              // Update user's RSVP status to completed
+              const userResponse = await fetch("/api/users", {
+                method: "PATCH",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  rsvpCompleted: true,
+                }),
+              });
+
+              if (userResponse.ok) {
+                router.push("/dashboard");
+              } else {
+                setError("Failed to update RSVP status");
+              }
+            } catch (err) {
+              setError("Failed to update RSVP status. Please try again.");
+              console.error("RSVP status update error:", err);
+            } finally {
+              setIsSubmitting(false);
+            }
+          }}
+          disabled={isSubmitting}
+          className="w-full bg-gray-500 hover:bg-gray-600 disabled:bg-gray-400 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-200 shadow-lg"
+        >
+          Someone else completed my RSVP
+        </button>
       </form>
     </div>
   );
