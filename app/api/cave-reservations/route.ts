@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Process each reservation
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const upsertOperations = reservations.map((reservation: any) => ({
       updateOne: {
         filter: {
