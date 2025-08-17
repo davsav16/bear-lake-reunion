@@ -5,6 +5,7 @@ interface IMember {
   name: string;
   rsvp: "undecided" | "not attending" | "attending";
   plusOne?: "undecided" | "not attending" | "attending";
+  minnetonkaRSVP?: "undecided" | "not attending" | "going";
 }
 
 interface IFamily {
@@ -37,6 +38,11 @@ const MemberSchema = new Schema({
   plusOne: {
     type: String,
     enum: ["undecided", "not attending", "attending"],
+  },
+  minnetonkaRSVP: {
+    type: String,
+    enum: ["undecided", "not attending", "going"],
+    default: "undecided",
   },
 });
 

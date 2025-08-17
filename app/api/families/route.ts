@@ -7,11 +7,11 @@ export async function GET() {
     await dbConnect();
 
     // Fetch all family members from MongoDB
-    const families = await FamilyMember.find({}).sort({ id: 1 });
+    const familyDocuments = await FamilyMember.find({});
 
     // Transform the data to use 'members' field for frontend compatibility
-    const transformedFamilies = families.flatMap((family) => {
-      const familyObj = family.toObject();
+    const transformedFamilies = familyDocuments.flatMap((familyDoc) => {
+      const familyObj = familyDoc.toObject();
 
       // The familyMembers array contains the actual families
       const actualFamilies = familyObj.familyMembers || [];
@@ -24,6 +24,10 @@ export async function GET() {
         })
       );
     });
+
+    console.log("API: Found", familyDocuments.length, "documents");
+    console.log("API: Transformed to", transformedFamilies.length, "families");
+    console.log("API: Sample family data:", transformedFamilies[0]);
 
     return NextResponse.json({ families: transformedFamilies });
   } catch (error) {

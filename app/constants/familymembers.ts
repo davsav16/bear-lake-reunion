@@ -3,8 +3,8 @@
     id: 1,
     name: "Brent and Nancy",
     members: [
-      { id: 1, name: "Brent", rsvp: "undecided" },
-      { id: 2, name: "Nancy", rsvp: "undecided" },
+      { id: 0, name: "Brent", rsvp: "undecided" },
+      { id: 1, name: "Nancy", rsvp: "undecided" },
     ],
   },
   {
@@ -65,7 +65,7 @@
   },
   {
     id: 5,
-    name: "Larry and Anet",
+    name: "Larry and Annette",
     members: [
       { id: 41, name: "Larry", rsvp: "undecided" },
       { id: 42, name: "Anet", rsvp: "undecided" },
